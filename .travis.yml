@@ -7,11 +7,14 @@ node_js:
   - "4.3"
   - "4.2"
 
+services: mongodb
+
 before_install:
  - npm install pm2 -g
 
 before_script:
  - pm2 start main.js --name "web-server"
+ - mongo --eval "db.getSiblingDB('stackrank').addUser('dev_user', '12345');"
 
 script:
  - npm test
