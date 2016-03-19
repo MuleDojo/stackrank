@@ -36,6 +36,7 @@ var path = require('path');
 var rootPath = path.normalize(path.dirname(require.main.filename) + "/../../../");
 var User = require(rootPath+'src/models/user.js');
 var Task = require(rootPath+'src/models/task.js');
+var crypto = require('crypto');
 
 describe('User', function() {
     context('Create User', function () {
@@ -77,9 +78,9 @@ describe('User', function() {
             obj.addTask(task);
 
             let taskOther = new Task;
-            taskOther._id = 1;
             taskOther.dateAdmission = task.dateAdmission;
             taskOther.doDate = task.doDate;
+            taskOther._id = crypto.createHash('md5').update(JSON.stringify(taskOther)).digest("hex");
 
             obj.tasks.should.containDeep([taskOther]);
             done();
@@ -94,9 +95,9 @@ describe('User', function() {
 
             let taskOther = new Task;
             taskOther.tittle = 'second task';
-            taskOther._id = 2;
             taskOther.dateAdmission = task2.dateAdmission;
             taskOther.doDate = task2.doDate;
+            taskOther._id = crypto.createHash('md5').update(JSON.stringify(taskOther)).digest("hex");
 
             obj.tasks.should.containDeep([taskOther]);
             done();
@@ -114,27 +115,68 @@ describe('User', function() {
 
             let taskOther = new Task;
             taskOther.tittle = 'third task';
-            taskOther._id = 3;
             taskOther.dateAdmission = task3.dateAdmission;
             taskOther.doDate = task3.doDate;
+            taskOther._id = crypto.createHash('md5').update(JSON.stringify(taskOther)).digest("hex");
 
             obj.tasks.should.containDeep([taskOther]);
             done();
         });
     });
-    // context('User#deleteTask', function () {
-    //     it('Delete Task X.', function(done){
-    //         let obj = new User;
-    //         let task = new Task;
-    //         obj.addTask(task);
-    //
-    //         let taskOther = new Task;
-    //         taskOther._id = 1;
-    //
-    //         obj.deleteTask(taskOther);
-    //
-    //         obj.tasks.should.not.containDeep([taskOther]);
-    //         done();
-    //     });
-    // });
+    context('User#deleteTask', function () {
+        it('Delete First Task.', function(done){
+            let obj = new User;
+            let task = new Task;
+            obj.addTask(task);
+
+            let taskOther = new Task;
+            taskOther.dateAdmission = task.dateAdmission;
+            taskOther.doDate = task.doDate;
+            taskOther._id = crypto.createHash('md5').update(JSON.stringify(taskOther)).digest("hex");
+
+            obj.deleteTask(taskOther);
+
+            obj.tasks.should.not.containDeep([taskOther]);
+            done();
+        });
+        it('Delete Second Task.', function(done){
+            let obj = new User;
+            let task = new Task;
+            task.title = 'Second Task';
+            let task1 = new Task;
+            obj.addTask(task);
+            obj.addTask(task1);
+
+            let taskOther = new Task;
+            taskOther.title = 'Second Task';
+            taskOther.dateAdmission = task.dateAdmission;
+            taskOther.doDate = task.doDate;
+            taskOther._id = crypto.createHash('md5').update(JSON.stringify(taskOther)).digest("hex");
+
+            obj.deleteTask(taskOther);
+
+            obj.tasks.should.not.containDeep([taskOther]);
+            done();
+        });
+        it('Delete and Insert Task.', function(done){
+            let obj = new User;
+            let task = new Task;
+            let task1 = new Task;
+            obj.addTask(task);
+
+            let taskOther = new Task;
+            taskOther.dateAdmission = task.dateAdmission;
+            taskOther.doDate = task.doDate;
+            taskOther._id = crypto.createHash('md5').update(JSON.stringify(taskOther)).digest("hex");
+
+
+            obj.deleteTask(taskOther);
+            obj.tasks.should.not.containDeep([taskOther]);
+
+            obj.addTask(task1);
+
+            obj.tasks.should.containDeep([task1]);
+            done();
+        });
+    });
 });

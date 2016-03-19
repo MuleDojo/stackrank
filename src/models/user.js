@@ -24,6 +24,8 @@
  */
 "use strict";
 
+var crypto = require('crypto');
+
 class User {
     /**
      * Constructor
@@ -49,26 +51,28 @@ class User {
      * @api public
      */
     addTask(task) {
-        task._id = this.tasks.length + 1;
+        task._id = crypto.createHash('md5').update(JSON.stringify(task)).digest("hex");
         this.tasks.push(task);
     }
-    // /**
-    //  * deleteTask
-    //  *
-    //  * Delete a Task.
-    //  *
-    //  * @param {Task} task Task for delete
-    //  *
-    //  * @return void
-    //  * @api public
-    //  */
-    // deleteTask(task) {
-    //     let index = this.tasks.indexOf(task);
-    //     console.log(index);
-    //     if (index > -1) {
-    //         this.tasks.splice(index, 1);
-    //     }
-    // }
+    /**
+     * deleteTask
+     *
+     * Delete a Task.
+     *
+     * @param {Task} task Task for delete
+     *
+     * @return void
+     * @api public
+     */
+    deleteTask(task) {
+        let index = this.tasks.findIndex(function (obj) {
+            return obj._id == task._id;
+        });
+
+        if (index > -1) {
+            this.tasks.splice(index, 1);
+        }
+    }
 }
 
 module.exports = User;
