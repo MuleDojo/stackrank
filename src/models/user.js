@@ -73,6 +73,41 @@ class User {
             this.tasks.splice(index, 1);
         }
     }
+    /**
+     * sortTasks
+     *
+     * Order task by urgency, importance and dateAdmission
+     *
+     * @param  {Function} callback Callback
+     *
+     * @return void
+     * @api public
+     */
+    sortTasks(callback) {
+        var orderByProperty = function orderByProperty(prop) {
+            var args = Array.prototype.slice.call(arguments, 1);
+            return function (b, a) {
+                var value1 = a[prop];
+                if (a[prop] instanceof Date) {
+                    value1 = a[prop].getTime();
+                }
+                var value2 = b[prop];
+                if (b[prop] instanceof Date) {
+                    value2 = b[prop].getTime();
+                }
+
+                var equality = value1 - value2;
+                if (equality === 0 && arguments.length > 1) {
+                    return orderByProperty.apply(null, args)(b, a);
+                }
+                return equality;
+            };
+        };
+
+        this.tasks.sort(orderByProperty('urgency', 'importance', 'dateAdmission'));
+
+        callback(false);
+    }
 }
 
 module.exports = User;

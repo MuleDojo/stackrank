@@ -178,5 +178,163 @@ describe('User', function() {
             obj.tasks.should.containDeep([task1]);
             done();
         });
+        it('Delete Not exits Task.', function(done){
+            let obj = new User;
+            let task = new Task;
+            let task1 = new Task;
+            task1.title = 'Second Task';
+            obj.addTask(task);
+
+            let taskOther = new Task;
+            taskOther.dateAdmission = task1.dateAdmission;
+            taskOther.doDate = task1.doDate;
+            taskOther.title = 'Second Task';
+            taskOther._id = crypto.createHash('md5').update(JSON.stringify(taskOther)).digest("hex");
+
+            obj.deleteTask(taskOther);
+            obj.tasks.should.not.containDeep([taskOther]);
+            obj.tasks.should.containDeep([task]);
+            done();
+        });
+    });
+    context('User#sortTasks', function () {
+        it('sort by urgency.', function(done){
+            var obj = new User;
+            var task = new Task;
+            var task1 = new Task;
+            var task2 = new Task;
+            var task3 = new Task;
+            task2.urgency = 0;
+            task.urgency = 1;
+            task1.urgency = 3;
+            obj.addTask(task2);
+            obj.addTask(task1);
+            obj.addTask(task);
+
+            obj.sortTasks(function (err) {
+                if (!err) {
+                    obj.tasks.should.containDeepOrdered([task1, task, task2]);
+                    done();
+                }
+            })
+        });
+        it('sort by importance.', function(done){
+            var obj1 = new User;
+            var task = new Task;
+            var task1 = new Task;
+            var task2 = new Task;
+            var task3 = new Task;
+            task2.urgency = 0;
+            task.urgency = 0;
+            task1.urgency = 0;
+            task2.importance = 0;
+            task.importance = 5;
+            task1.importance = 1;
+            obj1.addTask(task2);
+            obj1.addTask(task1);
+            obj1.addTask(task);
+
+            obj1.sortTasks(function (err) {
+                if (!err) {
+                    obj1.tasks.should.containDeepOrdered([task, task1, task2]);
+                    done();
+                }
+            })
+        });
+        it('sort by dateAdmission.', function(done){
+            var obj2 = new User;
+            var task = new Task;
+            var task1 = new Task;
+            var task2 = new Task;
+            var task3 = new Task;
+
+
+            task2.urgency = 0;
+            task2.importance = 0;
+            task2.dateAdmission = new Date(2016, 6, 15, 23, 59, 10);
+
+            task3.urgency = 0;
+            task3.importance = 0;
+            task3.dateAdmission = new Date(2016, 6, 14, 23, 59, 30);
+
+            task1.urgency = 0;
+            task1.importance = 0;
+            task1.dateAdmission = new Date(2016, 6, 14, 23, 59, 11);
+
+            task.urgency = 0;
+            task.importance = 0;
+            task.dateAdmission = new Date(2016, 6, 14, 23, 59, 0);
+
+            obj2.addTask(task3);
+            obj2.addTask(task2);
+            obj2.addTask(task1);
+            obj2.addTask(task);
+
+            obj2.sortTasks(function (err) {
+                if (!err) {
+                    obj2.tasks.should.containDeepOrdered([task2, task3, task1, task]);
+                    done();
+                }
+            })
+        });
+        it('sort by urgency and importance.', function(done){
+            var obj3 = new User;
+            var task = new Task;
+            var task1 = new Task;
+            var task2 = new Task;
+            var task3 = new Task;
+            task2.urgency = 0;
+            task.urgency = 0;
+            task1.urgency = 3;
+            task2.importance = 0;
+            task.importance = 10;
+            task1.importance = 1;
+            obj3.addTask(task2);
+            obj3.addTask(task1);
+            obj3.addTask(task);
+
+            obj3.sortTasks(function (err) {
+                if (!err) {
+                    obj3.tasks.should.containDeepOrdered([task1, task, task2]);
+                    done();
+                }
+            })
+        });
+        it('sort by urgency and importance and dateAdmission.', function(done){
+            var obj4 = new User;
+            var task = new Task;
+            var task1 = new Task;
+            var task2 = new Task;
+            var task3 = new Task;
+
+            task.urgency = 3;
+            task.importance = 1;
+            task.dateAdmission = new Date(2016, 6, 14, 23, 59, 0);
+
+            task3.urgency = 3;
+            task3.importance = 0;
+            task3.dateAdmission = new Date(2016, 6, 14, 23, 59, 30);
+
+            task1.urgency = 0;
+            task1.importance = 10;
+            task1.dateAdmission = new Date(2016, 6, 14, 23, 59, 11);
+
+            task2.urgency = 0;
+            task2.importance = 0;
+            task2.dateAdmission = new Date(2016, 6, 14, 23, 59, 10);
+
+
+            obj4.addTask(task);
+            obj4.addTask(task2);
+            obj4.addTask(task1);
+            obj4.addTask(task3);
+
+            obj4.sortTasks(function (err) {
+                if (!err) {
+                    obj4.tasks.should.containDeepOrdered([task, task3, task1, task2]);
+                    done();
+                }
+            })
+        });
     });
 });
