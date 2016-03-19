@@ -1,5 +1,7 @@
 Stack Rank
-==============
+==========
+
+[![Build Status](https://travis-ci.org/MuleDojo/stackrank.svg?branch=master)](https://travis-ci.org/MuleDojo/stackrank)
 
 This a daily stack rank.
 
