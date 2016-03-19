@@ -1,0 +1,61 @@
+{
+  "name": "stackrank",
+  "version": "1.0.0",
+  "description": "This a daily stack rank.",
+  "main": "main.js",
+  "scripts": {
+    "test": "mocha $(find test -name '*.test.js')",
+    "start": "node main.js",
+    "coverage": "istanbul cover _mocha $(find test -name '*.test.js')",
+    "eslint": "eslint --env node,es6 ./"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MuleDojo/stackrank.git"
+  },
+  "keywords": [
+    "Stack",
+    "Rank",
+    "Agile",
+    "Daily"
+  ],
+  "author": "Ignacio R. Galieri <irgalieri@gmail.com> (http://elnachonerd.com)",
+  "contributors": [
+    {
+      "name": "Matias Almada",
+      "email": "i.am.hi.matt@gmail.com"
+    },
+    {
+      "name": "Guido Marelli",
+      "email": "rgmarelli@gmail.com"
+    },
+    {
+      "name": "German Nemes",
+      "email": "gnemes@gmail.com"
+    },
+    {
+      "name": "Daniel Lamonica",
+      "email": "lamonica.daniel@gmail.com"
+    }
+  ],
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/MuleDojo/stackrank/issues"
+  },
+  "homepage": "https://github.com/MuleDojo/stackrank#readme",
+  "devDependencies": {
+    "eslint": "^2.3.0",
+    "istanbul": "*",
+    "mocha": "*",
+    "pre-commit": "^1.1.2",
+    "should": "*"
+  },
+  "dependencies": {
+    "express": "^4.13.4",
+    "socket.io": "^1.4.5",
+    "socket.io-client": "^1.4.5"
+  },
+  "pre-commit": [
+    "coverage"
+  ]
+}
