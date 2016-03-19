@@ -78,6 +78,8 @@ describe('User', function() {
 
             let taskOther = new Task;
             taskOther._id = 1;
+            taskOther.dateAdmission = task.dateAdmission;
+            taskOther.doDate = task.doDate;
 
             obj.tasks.should.containDeep([taskOther]);
             done();
@@ -93,6 +95,8 @@ describe('User', function() {
             let taskOther = new Task;
             taskOther.tittle = 'second task';
             taskOther._id = 2;
+            taskOther.dateAdmission = task2.dateAdmission;
+            taskOther.doDate = task2.doDate;
 
             obj.tasks.should.containDeep([taskOther]);
             done();
@@ -111,6 +115,8 @@ describe('User', function() {
             let taskOther = new Task;
             taskOther.tittle = 'third task';
             taskOther._id = 3;
+            taskOther.dateAdmission = task3.dateAdmission;
+            taskOther.doDate = task3.doDate;
 
             obj.tasks.should.containDeep([taskOther]);
             done();
