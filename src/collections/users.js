@@ -62,6 +62,7 @@ class Users {
         }
         let collection = this.connection.collection('users');
         collection.insertOne(obj, function(error, result) {
+            /* istanbul ignore next */
             return callback((error !== null), (error !== null)? error.message: "");
         });
     }
@@ -86,6 +87,7 @@ class Users {
         }
         var collection = this.connection.collection('users');
         collection.find({email: user.email}).toArray(function (error, items) {
+            /* istanbul ignore if */
             if (error !== null) {
                 return callback(true, error.message);
             }
@@ -93,6 +95,7 @@ class Users {
                 return callback(true, "user not found");
             }
             collection.deleteOne({email: user.email}, function(error, result) {
+                /* istanbul ignore next */
                 return callback((error !== null), (error !== null)? error.message: "");
             });
         });
