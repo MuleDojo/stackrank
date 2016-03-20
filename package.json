@@ -44,14 +44,15 @@
   },
   "homepage": "https://github.com/MuleDojo/stackrank#readme",
   "devDependencies": {
-    "eslint": "^2.3.0",
+    "eslint": "*",
     "istanbul": "*",
     "mocha": "*",
-    "pre-commit": "^1.1.2",
+    "pre-commit": "*",
     "should": "*"
   },
   "dependencies": {
     "express": "^4.13.4",
+    "mongodb": "^2.1.7",
     "socket.io": "^1.4.5",
     "socket.io-client": "^1.4.5"
   },

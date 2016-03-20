@@ -7,4 +7,4 @@ apt-get install -y nodejs
 apt-get install -y mongodb
 npm install bower -g
 npm install pm2 -g
-mongo --eval "db.getSiblingDB('stackrank').addUser('dev_user', '12345');"
+mongo --eval "db.getSiblingDB('stackrank').addUser('dev_user', '12345'); db.getSiblingDB('stackrank').createCollection('users');"
