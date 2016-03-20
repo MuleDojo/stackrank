@@ -144,5 +144,87 @@ describe('Users', function() {
                 });
             });
         });
+        it('Remove User - Faild because connection is NULL.', function(done){
+            let obj = new Users;
+            obj.connection = null;
+            let user = "John Doe";
+            obj.removeUser(user, function(error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("You must set connection first");
+                done();
+            });
+        });
+        it('Remove User - Faild because Obj is "John Doe".', function(done){
+            let obj = new Users;
+            obj.connection = connection;
+            let user = "John Doe";
+            obj.removeUser(user, function(error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("user must be instance of User class");
+                done();
+            });
+        });
+        it('Remove User - Faild because Obj is 100.', function(done){
+            let obj = new Users;
+            obj.connection = connection;
+            let user = 100;
+            obj.removeUser(user, function(error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("user must be instance of User class");
+                done();
+            });
+        });
+        it('Remove User - Faild because Obj is null.', function(done){
+            let obj = new Users;
+            obj.connection = connection;
+            let user = null;
+            obj.removeUser(user, function(error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("user must be instance of User class");
+                done();
+            });
+        });
+        it('Remove User - Faild because Obj no is instance of User.', function(done){
+            let obj = new Users;
+            obj.connection = connection;
+            let user = {};
+            obj.removeUser(user, function(error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("user must be instance of User class");
+                done();
+            });
+        });
+        it('Remove User - Faild becuase user not found.', function(done){
+            var collection = connection.collection('users');
+            var obj = new Users;
+            var user = new User;
+            user.firstname = "John";
+            user.lastname = "Doe";
+            user.email = "john.doe@domain.com";
+            obj.connection = connection;
+            obj.removeUser(user, function (error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("user not found");
+                done();
+            });
+        });
+        it('Remove User - Success.', function(done){
+            var collection = connection.collection('users');
+            var obj = new Users;
+            var user = new User;
+            user.firstname = "John";
+            user.lastname = "Doe";
+            user.email = "john.doe@domain.com";
+            obj.connection = connection;
+            obj.insertUser(user, function(error, message) {
+                error.should.be.eql(false);
+                message.should.be.eql("");
+                obj.removeUser(user, function (error, message) {
+                    error.should.be.eql(false);
+                    message.should.be.eql("");
+                    done();
+                });
+            });
+        });
     });
 });

@@ -38,7 +38,7 @@ class Users {
     /**
      * insertUser
      *
-     * Insert New into Data Base.
+     * Insert New User into Data Base.
      *
      * @param  {User}     user     User to Insert
      * @param  {Function} callback Callback
@@ -63,6 +63,38 @@ class Users {
         let collection = this.connection.collection('users');
         collection.insertOne(obj, function(error, result) {
             return callback((error !== null), (error !== null)? error.message: "");
+        });
+    }
+    /**
+     * removeUser
+     *
+     * Remove User from Data Base.
+     *
+     * @param  {User}     user     User to Remove
+     * @param  {Function} callback Callback
+     *
+     * @return void
+     * @api public
+     */
+    removeUser(user, callback) {
+        if (this.connection === null) {
+            return callback(true, "You must set connection first");
+
+        }
+        if (!(user instanceof User)) {
+            return callback(true, "user must be instance of User class");
+        }
+        var collection = this.connection.collection('users');
+        collection.find({email: user.email}).toArray(function (error, items) {
+            if (error !== null) {
+                return callback(true, error.message);
+            }
+            if (items.length === 0) {
+                return callback(true, "user not found");
+            }
+            collection.deleteOne({email: user.email}, function(error, result) {
+                return callback((error !== null), (error !== null)? error.message: "");
+            });
         });
     }
 }
