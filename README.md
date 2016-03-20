@@ -1,7 +1,7 @@
 Stack Rank
 ==========
 
-[![Build Status](https://travis-ci.org/MuleDojo/stackrank.svg?branch=master)](https://travis-ci.org/MuleDojo/stackrank)
+[![Build Status](https://travis-ci.org/MuleDojo/stackrank.svg?branch=master)](https://travis-ci.org/MuleDojo/stackrank) [![David Check Dependencies](https://david-dm.org/MuleDojo/stackrank.svg)](https://david-dm.org/MuleDojo/stackrank) [![Inline docs](http://inch-ci.org/github/MuleDojo/stackrank.svg?branch=master&style=shields)](http://inch-ci.org/github/MuleDojo/stackrank)
 
 This a daily stack rank.
 
