@@ -227,4 +227,93 @@ describe('WebSocket', function() {
             });
         });
     });
+    context('Find User', function () {
+        var connection = null;
+        var db = null;
+        beforeEach(function(done) {
+            var url = 'mongodb://localhost/stackrank';
+            MongoClient.connect(url, function(err, result) {
+                assert.equal(null, err);
+                db = result;
+                let socketURL = 'ws://localhost:8080';
+                let options ={
+                    transports: ['websocket'],
+                    'force new connection': true
+                };
+                connection = io.connect(socketURL, options);
+                connection.on('connect', function() {
+                    done();
+                });
+            });
+        });
+        afterEach(function(done) {
+            if (connection !== null) {
+                let collection = db.collection('users');
+                collection.deleteMany({});
+                db.close();
+                connection.disconnect();
+            }
+            connection = null;
+            done();
+        });
+        it('Fail because email is empty.', function(done){
+            connection.emit('find_user', null);
+            connection.on('find_user_response', function (response) {
+                response.messages.should.deepEqual({message: 'email wrong format'});
+                done();
+            });
+        });
+        it('Fail because email is wrong formated.', function(done){
+            connection.emit('find_user', 'jondomain.com');
+            connection.on('find_user_response', function (response) {
+                response.messages.should.deepEqual({message: 'email wrong format'});
+                done();
+            });
+        });
+        it('Fail because user not found.', function(done){
+            connection.emit('find_user', 'john.doe@domain.com');
+            connection.on('find_user_response', function (response) {
+                response.messages.should.deepEqual({message: 'success'});
+                assert.equal(null, response.user);
+                done();
+            });
+        });
+        it('Success.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            var task1 = {};
+            task1.tittle = 'first task';
+            task1.status = 'new';
+            task1.doDate = new Date().toString();
+            task1.dateAdmission = new Date().toString();
+            task1.urgency = 100;
+            task1.importance = 10;
+            var task2 = {};
+            task2.tittle = 'second task';
+            task2.status = 'new';
+            task2.doDate = new Date().toString();
+            task2.dateAdmission = new Date().toString();
+            task2.urgency = 100;
+            task2.importance = 0;
+            user.tasks.push(task1);
+            user.tasks.push(task2);
+
+            let collection = db.collection('users');
+            collection.insertOne(user, function(err, result) {
+                assert.equal(null, err);
+                connection.emit('find_user', 'john.doe@domain.com');
+                connection.on('find_user_response', function (response) {
+                    response.messages.should.be.eql({message: 'success'});
+                    user._id = response.user._id;
+                    user.tasks[0]._id = response.user.tasks[0]._id;
+                    user.tasks[1]._id = response.user.tasks[1]._id;
+                    response.user.should.deepEqual(user);
+                    done();
+                });
+            });
+        });
+    });
 });
