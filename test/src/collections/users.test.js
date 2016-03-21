@@ -64,11 +64,13 @@ describe('Users', function() {
         });
         after(function(done) {
             if (connection !== null) {
+                let collection = connection.collection('users');
+                collection.deleteMany({});
                 connection.close();
             }
             done();
         });
-        it('Create New User - Faild because connection is NULL.', function(done){
+        it('Create New User - Fail because connection is NULL.', function(done){
             let obj = new Users;
             obj.connection = null;
             let user = "John Doe";
@@ -78,7 +80,7 @@ describe('Users', function() {
                 done();
             });
         });
-        it('Create New User - Faild because Obj is "John Doe".', function(done){
+        it('Create New User - Fail because Obj is "John Doe".', function(done){
             let obj = new Users;
             obj.connection = connection;
             let user = "John Doe";
@@ -88,7 +90,7 @@ describe('Users', function() {
                 done();
             });
         });
-        it('Create New User - Faild because Obj is 100.', function(done){
+        it('Create New User - Fail because Obj is 100.', function(done){
             let obj = new Users;
             obj.connection = connection;
             let user = 100;
@@ -98,7 +100,7 @@ describe('Users', function() {
                 done();
             });
         });
-        it('Create New User - Faild because Obj is null.', function(done){
+        it('Create New User - Fail because Obj is null.', function(done){
             let obj = new Users;
             obj.connection = connection;
             let user = null;
@@ -108,7 +110,7 @@ describe('Users', function() {
                 done();
             });
         });
-        it('Create New User - Faild because Obj no is instance of User.', function(done){
+        it('Create New User - Fail because Obj no is instance of User.', function(done){
             let obj = new Users;
             obj.connection = connection;
             let user = {};
@@ -135,7 +137,7 @@ describe('Users', function() {
                     docs[0].lastname.should.be.eql("Doe");
                     docs[0].email.should.be.eql("john.doe@domain.com");
                     docs[0].tasks.length.should.be.eql(0);
-                    collection.removeMany();
+                    collection.deleteMany({});
                     collection.find().toArray(function(err, docs) {
                       assert.equal(null, err);
                       docs.length.should.be.eql(0);
@@ -144,7 +146,7 @@ describe('Users', function() {
                 });
             });
         });
-        it('Remove User - Faild because connection is NULL.', function(done){
+        it('Remove User - Fail because connection is NULL.', function(done){
             let obj = new Users;
             obj.connection = null;
             let user = "John Doe";
@@ -154,7 +156,7 @@ describe('Users', function() {
                 done();
             });
         });
-        it('Remove User - Faild because Obj is "John Doe".', function(done){
+        it('Remove User - Fail because Obj is "John Doe".', function(done){
             let obj = new Users;
             obj.connection = connection;
             let user = "John Doe";
@@ -164,7 +166,7 @@ describe('Users', function() {
                 done();
             });
         });
-        it('Remove User - Faild because Obj is 100.', function(done){
+        it('Remove User - Fail because Obj is 100.', function(done){
             let obj = new Users;
             obj.connection = connection;
             let user = 100;
@@ -174,7 +176,7 @@ describe('Users', function() {
                 done();
             });
         });
-        it('Remove User - Faild because Obj is null.', function(done){
+        it('Remove User - Fail because Obj is null.', function(done){
             let obj = new Users;
             obj.connection = connection;
             let user = null;
@@ -184,7 +186,7 @@ describe('Users', function() {
                 done();
             });
         });
-        it('Remove User - Faild because Obj no is instance of User.', function(done){
+        it('Remove User - Fail because Obj no is instance of User.', function(done){
             let obj = new Users;
             obj.connection = connection;
             let user = {};
@@ -194,7 +196,7 @@ describe('Users', function() {
                 done();
             });
         });
-        it('Remove User - Faild becuase user not found.', function(done){
+        it('Remove User - Fail becuase user not found.', function(done){
             var collection = connection.collection('users');
             var obj = new Users;
             var user = new User;
@@ -223,6 +225,107 @@ describe('Users', function() {
                     error.should.be.eql(false);
                     message.should.be.eql("");
                     done();
+                });
+            });
+        });
+        it('Find User - Fail because connection is null.', function(done){
+            var collection = connection.collection('users');
+            var obj = new Users;
+            obj.connection = null;
+            var user = new User;
+            obj.findUser(null, function (error, message, result) {
+                error.should.be.eql(true);
+                message.should.be.eql('You must set connection first');
+                assert.equal(null, result);
+                done();
+            });
+        });
+        it('Find User - Fail because mail is null.', function(done){
+            var collection = connection.collection('users');
+            var obj = new Users;
+            obj.connection = connection;
+            var user = new User;
+            obj.findUser(null, function (error, message, result) {
+                error.should.be.eql(true);
+                message.should.be.eql('email must be not empty');
+                assert.equal(null, result);
+                done();
+            });
+        });
+        it('Find User - Fail because mail is "".', function(done){
+            var collection = connection.collection('users');
+            var obj = new Users;
+            obj.connection = connection;
+            var user = new User;
+            obj.findUser('', function (error, message, result) {
+                error.should.be.eql(true);
+                message.should.be.eql('email must be not empty');
+                assert.equal(null, result);
+                done();
+            });
+        });
+        it('Find User - Success User without Tasks.', function(done){
+            var collection = connection.collection('users');
+            var obj = new Users;
+            var user = new User;
+            user.firstname = "John";
+            user.lastname = "Doe";
+            user.email = "john.doe@domain.com";
+            obj.connection = connection;
+            obj.insertUser(user, function(error, message) {
+                error.should.be.eql(false);
+                message.should.be.eql("");
+                obj.findUser(user.email, function (error, message, result) {
+                    error.should.be.eql(false);
+                    message.should.be.eql('');
+                    result._id.should.be.not.eql(null);
+                    result.email.should.be.eql(user.email);
+                    result.firstname.should.be.eql(user.firstname);
+                    result.lastname.should.be.eql(user.lastname);
+                    result.tasks.should.be.eql([]);
+                    obj.removeUser(user, function (error, message) {
+                        error.should.be.eql(false);
+                        message.should.be.eql("");
+                        done();
+                    });
+                });
+            });
+        });
+        it('Find User - Success User with two Tasks.', function(done){
+            var collection = connection.collection('users');
+            var obj = new Users;
+            var user = new User;
+            user.firstname = "John";
+            user.lastname = "Doe";
+            user.email = "john.doe@domain.com";
+            obj.connection = connection;
+            var task1 = new Task();
+            task1.tittle = 'First';
+            task1.urgency = 10;
+            var task2 = new Task();
+            task2.tittle = 'Second';
+            user.addTask(task1);
+            user.addTask(task2);
+            obj.insertUser(user, function(error, message) {
+                error.should.be.eql(false);
+                message.should.be.eql("");
+                obj.findUser(user.email, function (error, message, result) {
+                    error.should.be.eql(false);
+                    message.should.be.eql('');
+                    result._id.should.be.not.eql(null);
+                    result.email.should.be.eql(user.email);
+                    result.firstname.should.be.eql(user.firstname);
+                    result.lastname.should.be.eql(user.lastname);
+                    result.tasks.length.should.be.eql(2);
+                    task1._id = result.tasks[0]._id;
+                    task2._id = result.tasks[1]._id;
+                    result.tasks[0].should.deepEqual(task1);
+                    result.tasks[1].should.deepEqual(task2);
+                    obj.removeUser(user, function (error, message) {
+                        error.should.be.eql(false);
+                        message.should.be.eql("");
+                        done();
+                    });
                 });
             });
         });

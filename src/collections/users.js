@@ -24,6 +24,7 @@
  */
 "use strict";
 var User = require('../models/user.js');
+var Task = require('../models/task.js');
 
 class Users {
     /**
@@ -98,6 +99,51 @@ class Users {
                 /* istanbul ignore next */
                 return callback((error !== null), (error !== null)? error.message: "");
             });
+        });
+    }
+    /**
+     * findUser
+     *
+     * Find User
+     *
+     * @param  {String}   email    Email to find user
+     * @param  {Function} callback Callback
+     *
+     * @return void
+     * @api public
+     */
+    findUser(email, callback) {
+        if (this.connection === null) {
+            return callback(true, "You must set connection first", null);
+        }
+        if (!email) {
+            return callback(true, "email must be not empty", null);
+        }
+        var collection = this.connection.collection('users');
+        collection.find({email: email}).toArray(function (error, items) {
+            var user = new User;
+            user._id = items[0]._id;
+            user.firstname = items[0].firstname;
+            user.lastname = items[0].lastname;
+            user.email = items[0].email;
+            for (let index in items[0].tasks) {
+                let elem = items[0].tasks[index];
+                let task = new Task;
+                task._id = elem._id;
+                task.tittle = elem.tittle;
+                task.status = elem.status;
+                task.doDate = elem.doDate;
+                task.dateAdmission = elem.dateAdmission;
+                task.urgency = elem.urgency;
+                task.importance = elem.importance;
+                user.addTask(task);
+            }
+            /* istanbul ignore next */
+            return callback(
+                (error !== null),
+                (error !== null)? error.message: "",
+                user
+            );
         });
     }
 }
