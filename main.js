@@ -48,7 +48,7 @@ app.use('/', function(req, res) {
  *
  * Validate user fields
  *
- * @param  {[type]} user [description]
+ * @param  {Object} user User Object to Validate
  *
  * @return {Object}
  */
@@ -72,6 +72,34 @@ function validateUser(user) {
         response.messages.push({field: 'tasks', message: 'must be array'});
     }
     return response;
+}
+
+/**
+ * createUser
+ *
+ * Creatre user from user object
+ *
+ * @param  {Object} request User Object to Validate
+ *
+ * @return {User}
+ */
+function createUser(request) {
+    var user = new User;
+    user.firstname = request.firstname;
+    user.lastname = request.lastname;
+    user.email = request.email;
+    for (let index in request.tasks) {
+        let elem = request.tasks[index];
+        let task = new Task;
+        task.tittle = elem.tittle;
+        task.status = elem.status;
+        task.doDate = elem.doDate;
+        task.dateAdmission = elem.dateAdmission;
+        task.urgency = elem.urgency;
+        task.importance = elem.importance;
+        user.addTask(task);
+    }
+    return user;
 }
 
 var server = require('http').createServer(app);
@@ -102,21 +130,7 @@ io.on('connection', function(socket){
                         return socket.emit('create_user_response', response);
                     }
                 }
-                var user = new User;
-                user.firstname = request.firstname;
-                user.lastname = request.lastname;
-                user.email = request.email;
-                for (let index in request.tasks) {
-                    let elem = request.tasks[index];
-                    let task = new Task;
-                    task.tittle = elem.tittle;
-                    task.status = elem.status;
-                    task.doDate = elem.doDate;
-                    task.dateAdmission = elem.dateAdmission;
-                    task.urgency = elem.urgency;
-                    task.importance = elem.importance;
-                    user.addTask(task);
-                }
+                var user = createUser(request);
                 users.insertUser(user, function (error, message) {
                     if (error) {
                         response.messages.push({field: 'all', message: message});
