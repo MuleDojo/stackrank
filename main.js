@@ -216,6 +216,39 @@ io.on('connection', function(socket){
         if (response.messages.length !== 0) {
             return socket.emit('update_user_response', response);
         }
+        var db = null;
+        MongoClient.connect(urlMongo, function(error, result) {
+            if (error) {
+                response.message = error.message;
+                return socket.emit('update_user_response', response);
+            }
+            db = result;
+            var users = new Users;
+            users.connection = db;
+            users.findUser(request.email, function (error, message, result) {
+                if (error) {
+                    response.message = error.message;
+                    db.close();
+                    return socket.emit('update_user_response', response);
+                }
+                if (result === null) {
+                    response.message = 'user not found';
+                    db.close();
+                    return socket.emit('update_user_response', response);
+                }
+                var user = createUser(request);
+                user.sortTasks(function (error) {
+                    users.updateUser(user, function (error, message) {
+                        if (error) {
+                            response.messages.push({field: 'all', message: message});
+                        }
+                        response.user = user;
+                        db.close();
+                        return socket.emit('update_user_response', response);
+                    });
+                });
+            });
+        });
     });
     socket.on('disconnect', function(data){
         console.log((new Date()) + ' Connection finish.');

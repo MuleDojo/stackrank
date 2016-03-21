@@ -563,5 +563,52 @@ describe('WebSocket', function() {
                 done();
             });
         });
+        it('Fail because users not found.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            connection.emit('update_user', user);
+            connection.on('update_user_response', function (response) {
+                response.message.should.deepEqual('user not found');
+                done();
+            });
+        });
+        it('Success.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            let collection = db.collection('users');
+            collection.insertOne(user, function(err, result) {
+                assert.equal(null, err);
+                user.firstname = 'Jose';
+                var task1 = {};
+                task1.tittle = 'first task';
+                task1.status = 'new';
+                task1.doDate = new Date().toString();
+                task1.dateAdmission = new Date().toString();
+                task1.urgency = 5;
+                task1.importance = 5;
+                var task2 = {};
+                task2.tittle = 'second task';
+                task2.status = 'new';
+                task2.doDate = new Date().toString();
+                task2.dateAdmission = new Date().toString();
+                task2.urgency = 5;
+                task2.importance = 10;
+                user.tasks.push(task1);
+                user.tasks.push(task2);
+                connection.emit('update_user', user);
+                connection.on('update_user_response', function (response) {
+                    response.messages.length.should.be.eql(0);
+                    response.user.firstname.should.be.eql('Jose');
+                    response.user.tasks.should.containDeepOrdered([task2, task1]);
+                    done();
+                });
+            });
+        });
     });
 });
