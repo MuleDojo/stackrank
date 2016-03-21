@@ -316,7 +316,7 @@ describe('WebSocket', function() {
             });
         });
     });
-    context('Reomve User', function () {
+    context('Remove User', function () {
         var connection = null;
         var db = null;
         beforeEach(function(done) {
