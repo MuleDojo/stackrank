@@ -146,6 +146,46 @@ class Users {
             );
         });
     }
+    /**
+     * updateUser
+     *
+     * Update User in Data Base.
+     *
+     * @param  {User}     user     User to Update
+     * @param  {Function} callback Callback
+     *
+     * @return void
+     * @api public
+     */
+    updateUser(user, callback) {
+        if (this.connection === null) {
+            return callback(true, "You must set connection first");
+
+        }
+        if (!(user instanceof User)) {
+            return callback(true, "user must be instance of User class");
+        }
+        var collection = this.connection.collection('users');
+        collection.find({email: user.email}).toArray(function (error, items) {
+            /* istanbul ignore if */
+            if (error !== null) {
+                return callback(true, error.message);
+            }
+            if (items.length === 0) {
+                return callback(true, "user not found");
+            }
+            let obj = {
+                firstname: user.firstname,
+                lastname: user.lastname,
+                email: user.email,
+                tasks: user.tasks
+            }
+            collection.updateOne({email: user.email}, {$set:obj}, function(error, result) {
+                /* istanbul ignore next */
+                return callback((error !== null), (error !== null)? error.message: "");
+            });
+        });
+    }
 }
 
 module.exports = Users;

@@ -329,5 +329,114 @@ describe('Users', function() {
                 });
             });
         });
+        it('Update User - Fail beacuase connection is null', function(done){
+            var collection = connection.collection('users');
+            var obj = new Users;
+            obj.connection = null;
+            var user = new User;
+            obj.updateUser(null, function (error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql('You must set connection first');
+                done();
+            });
+        });
+        it('Update User - Fail because Obj is "John Doe".', function(done){
+            let obj = new Users;
+            obj.connection = connection;
+            let user = "John Doe";
+            obj.updateUser(user, function(error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("user must be instance of User class");
+                done();
+            });
+        });
+        it('Update User - Fail because Obj is 100.', function(done){
+            let obj = new Users;
+            obj.connection = connection;
+            let user = 100;
+            obj.updateUser(user, function(error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("user must be instance of User class");
+                done();
+            });
+        });
+        it('Update User - Fail because Obj is null.', function(done){
+            let obj = new Users;
+            obj.connection = connection;
+            let user = null;
+            obj.updateUser(user, function(error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("user must be instance of User class");
+                done();
+            });
+        });
+        it('Update User - Fail because Obj no is instance of User.', function(done){
+            let obj = new Users;
+            obj.connection = connection;
+            let user = {};
+            obj.updateUser(user, function(error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("user must be instance of User class");
+                done();
+            });
+        });
+        it('Update User - Fail because user not found.', function(done){
+            let obj = new Users;
+            obj.connection = connection;
+            var user = new User;
+            user.firstname = "John";
+            user.lastname = "Doe";
+            user.email = "john.doe@domain.com";
+            obj.updateUser(user, function(error, message) {
+                error.should.be.eql(true);
+                message.should.be.eql("user not found");
+                done();
+            });
+        });
+        it('Update User - Success.', function(done){
+            var collection = connection.collection('users');
+            var obj = new Users;
+            var user = new User;
+            user.firstname = "John";
+            user.lastname = "Doe";
+            user.email = "john.doe@domain.com";
+            obj.connection = connection;
+            var task1 = new Task();
+            task1.tittle = 'First';
+            task1.urgency = 10;
+            var task2 = new Task();
+            task2.tittle = 'Second';
+            task2.urgency = 100;
+            user.addTask(task1);
+            user.addTask(task2);
+            obj.insertUser(user, function(error, message) {
+                error.should.be.eql(false);
+                message.should.be.eql("");
+                obj.findUser(user.email, function (error, message, userToUp) {
+                    error.should.be.eql(false);
+                    message.should.be.eql("");
+                    userToUp.firstname = 'Juan';
+                    userToUp.sortTasks(function (error) {
+                        error.should.be.eql(false);
+                        obj.updateUser(userToUp, function (error, message) {
+                            error.should.be.eql(false);
+                            message.should.be.eql('');
+                            obj.findUser(user.email, function (error, message, userToCheck) {
+                                error.should.be.eql(false);
+                                message.should.be.eql("");
+                                userToUp.tasks[0]._id = userToCheck.tasks[0]._id;
+                                userToUp.tasks[1]._id = userToCheck.tasks[1]._id;
+                                userToCheck.should.deepEqual(userToUp);
+                                obj.removeUser(userToCheck, function (error, message) {
+                                    error.should.be.eql(false);
+                                    message.should.be.eql("");
+                                    done();
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
     });
 });
