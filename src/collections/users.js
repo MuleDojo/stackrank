@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @category   Code
- * @package    helpers
+ * @package    collections
  * @author     Ignacio R. Galieri <irgalieri@gmail.com>
  * @copyright  2016 Mule Dojo
  * @license    GPL-3.0
@@ -121,22 +121,26 @@ class Users {
         }
         var collection = this.connection.collection('users');
         collection.find({email: email}).toArray(function (error, items) {
-            var user = new User;
-            user._id = items[0]._id;
-            user.firstname = items[0].firstname;
-            user.lastname = items[0].lastname;
-            user.email = items[0].email;
-            for (let index in items[0].tasks) {
-                let elem = items[0].tasks[index];
-                let task = new Task;
-                task._id = elem._id;
-                task.tittle = elem.tittle;
-                task.status = elem.status;
-                task.doDate = elem.doDate;
-                task.dateAdmission = elem.dateAdmission;
-                task.urgency = elem.urgency;
-                task.importance = elem.importance;
-                user.addTask(task);
+            var user = null;
+            /* istanbul ignore else */
+            if (items.length === 1) {
+                var user = new User;
+                user._id = items[0]._id;
+                user.firstname = items[0].firstname;
+                user.lastname = items[0].lastname;
+                user.email = items[0].email;
+                for (let index in items[0].tasks) {
+                    let elem = items[0].tasks[index];
+                    let task = new Task;
+                    task._id = elem._id;
+                    task.tittle = elem.tittle;
+                    task.status = elem.status;
+                    task.doDate = elem.doDate;
+                    task.dateAdmission = elem.dateAdmission;
+                    task.urgency = elem.urgency;
+                    task.importance = elem.importance;
+                    user.addTask(task);
+                }
             }
             /* istanbul ignore next */
             return callback(

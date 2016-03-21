@@ -24,13 +24,6 @@
  */
 "use strict";
 
-// Version 1
-// - debe ser una lista ordenada (urgencia-importancia-fecha ingreso, en ese orden), que contenga los campos urgencia, importancia, titulo fecha de ingreso, fecha estimada de finalizacion.
-// - al agregarse una nueva tarea, debe reorganizarse automaticamente y reordenar las demas
-// - todos los campos de la lista deben ser editables inline
-// - los items de la lista, deben poder marcarse como finalizados
-// - deben poder ver,ocultar??  los items ya marcados como finalizados
-
 var path = require('path');
 var rootPath = path.normalize(path.dirname(require.main.filename) + "/../../../");
 var User = require(rootPath+'src/models/user.js');

@@ -24,14 +24,207 @@
  */
 "use strict";
 
+var path = require('path');
+var rootPath = path.normalize(path.dirname(require.main.filename) + "/../../../");
+var User = require(rootPath+'src/models/user.js');
+var Task = require(rootPath+'src/models/task.js');
+var Users = require(rootPath+'src/collections/users.js');
+var MongoClient = require('mongodb').MongoClient;
+var assert = require('assert');
+var io = require('socket.io-client');
+
+// Version 1
+// - debe ser una lista ordenada (urgencia-importancia-fecha ingreso, en ese orden), que contenga los campos urgencia, importancia, titulo fecha de ingreso, fecha estimada de finalizacion.
+// - al agregarse una nueva tarea, debe reorganizarse automaticamente y reordenar las demas
+// - todos los campos de la lista deben ser editables inline
+// - los items de la lista, deben poder marcarse como finalizados
+// - deben poder ver,ocultar??  los items ya marcados como finalizados
+
 describe('WebSocket', function() {
-    context('dummytestsuite', function () {
-        it('dummytestcase.', function(done){
-            let msg = 'dummy text';
-            msg.should.equal(
-                'dummy text'
-            );
+    context('Create User', function () {
+        var connection = null;
+        var db = null;
+        beforeEach(function(done) {
+            var url = 'mongodb://localhost/stackrank';
+            MongoClient.connect(url, function(err, result) {
+                assert.equal(null, err);
+                db = result;
+                let socketURL = 'ws://localhost:8080';
+                let options ={
+                    transports: ['websocket'],
+                    'force new connection': true
+                };
+                connection = io.connect(socketURL, options);
+                connection.on('connect', function() {
+                    done();
+                });
+            });
+        });
+        afterEach(function(done) {
+            if (connection !== null) {
+                let collection = db.collection('users');
+                collection.deleteMany({});
+                db.close();
+                connection.disconnect();
+            }
+            connection = null;
             done();
+        });
+        it('Fail because user is empty.', function(done){
+            connection.emit('create_user', null);
+            connection.on('create_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'all', message: 'user must be not empty'}]);
+                done();
+            });
+        });
+        it('Fail because user have email empty.', function(done){
+            var user = {};
+            user.email = '';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            connection.emit('create_user', user);
+            connection.on('create_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'email',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have email wrong formated.', function(done){
+            var user = {};
+            user.email = 'john.doedomain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            connection.emit('create_user', user);
+            connection.on('create_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'email',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have firstname empty.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = '';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            connection.emit('create_user', user);
+            connection.on('create_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'firstname',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have firstname wrong formated.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John Doe';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            connection.emit('create_user', user);
+            connection.on('create_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'firstname',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have lastname empty.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = '';
+            user.tasks = [];
+            connection.emit('create_user', user);
+            connection.on('create_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'lastname',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have lastname wrong formated.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe, John';
+            user.tasks = [];
+            connection.emit('create_user', user);
+            connection.on('create_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'lastname',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have tasks empty.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = null;
+            connection.emit('create_user', user);
+            connection.on('create_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'tasks', message: 'must be array'}]);
+                done();
+            });
+        });
+        it('Fail because user have tasks wrong formated.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = 'eeeee';
+            connection.emit('create_user', user);
+            connection.on('create_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'tasks', message: 'must be array'}]);
+                done();
+            });
+        });
+        it('Fail because user have wrong formated.', function(done){
+            var user = {};
+            user.email = 'john.doedomain.com';
+            user.firstname = 'John Doe';
+            user.lastname = 'Doe, John';
+            user.tasks = 'eeeee';
+            connection.emit('create_user', user);
+            connection.on('create_user_response', function (response) {
+                response.messages.should.deepEqual(
+                    [
+                        {field: 'email',  message: 'wrong format'},
+                        {field: 'firstname',  message: 'wrong format'},
+                        {field: 'lastname',  message: 'wrong format'},
+                        {field: 'tasks', message: 'must be array'}
+                    ]
+                );
+                done();
+            });
+        });
+        it('Fail because user allready exists.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            let collection = db.collection('users');
+            collection.insertOne(user, function(err, result) {
+                assert.equal(null, err);
+                connection.emit('create_user', user);
+                connection.on('create_user_response', function (response) {
+                    response.messages.should.deepEqual(
+                        [
+                            {field: 'all',  message: 'user already exists'}
+                        ]
+                    );
+                    done();
+                });
+            });
+        });
+        it('Success.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            connection.emit('create_user', user);
+            connection.on('create_user_response', function (response) {
+                user._id =  null;
+                response.messages.length.should.be.eql(0);
+                response.user.should.deepEqual(user);
+                done();
+            });
         });
     });
 });
