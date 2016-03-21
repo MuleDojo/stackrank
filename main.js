@@ -120,13 +120,13 @@ io.on('connection', function(socket){
         var response = {};
         var emailCheck = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         if (!emailCheck.test(request)) {
-            response.messages = {message: 'email wrong format'};
+            response.message = 'email wrong format';
             return socket.emit('find_user_response', response);
         }
         var db = null;
         MongoClient.connect(urlMongo, function(error, result) {
             if (error) {
-                response.messages = {message: error.message};
+                response.message = error.message;
                 return socket.emit('find_user_response', response);
             }
             db = result;
@@ -134,14 +134,54 @@ io.on('connection', function(socket){
             users.connection = db;
             users.findUser(request, function (error, message, result) {
                 if (error) {
-                    response.messages = {message: error.message};
+                    response.message = error.message;
                     db.close();
                     return socket.emit('find_user_response', response);
                 }
-                response.messages = {message: 'success'};
+                response.message = 'success';
                 response.user = result;
                 db.close();
                 return socket.emit('find_user_response', response);
+            });
+        });
+    });
+    socket.on('delete_user', function (request) {
+        var response = {};
+        var emailCheck = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        if (!emailCheck.test(request)) {
+            response.message = 'email wrong format';
+            return socket.emit('delete_user_response', response);
+        }
+        var db = null;
+        MongoClient.connect(urlMongo, function(error, result) {
+            if (error) {
+                response.message = error.message;
+                return socket.emit('delete_user_response', response);
+            }
+            db = result;
+            var users = new Users;
+            users.connection = db;
+            users.findUser(request, function (error, message, result) {
+                if (error) {
+                    response.message = error.message;
+                    db.close();
+                    return socket.emit('delete_user_response', response);
+                }
+                if (result === null) {
+                    response.message = 'user not found';
+                    db.close();
+                    return socket.emit('delete_user_response', response);
+                }
+                users.removeUser(result, function (error, message) {
+                    if (error) {
+                        response.message = error.message;
+                        db.close();
+                        return socket.emit('delete_user_response', response);
+                    }
+                    response.message = 'success';
+                    db.close();
+                    return socket.emit('delete_user_response', response);
+                });
             });
         });
     });
