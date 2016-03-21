@@ -38,6 +38,7 @@ var serverPort = 8080;
 var urlMongo = 'mongodb://localhost/stackrank';
 var emailCheck = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 var wordCheck = /^\w+$/;
+var num09Check = /^[0-9]{1}$/;
 
 app.use('/', function(req, res) {
      res.send('Stack Rank');
@@ -245,6 +246,72 @@ io.on('connection', function(socket){
                         response.user = user;
                         db.close();
                         return socket.emit('update_user_response', response);
+                    });
+                });
+            });
+        });
+    });
+    socket.on('add_task', function (request) {
+        var response = {};
+        response.messages = [];
+        if (!emailCheck.test(request.email)) {
+            response.messages.push({field:'email',message:'email wrong format'});
+            return socket.emit('add_task_response', response);
+        }
+        if (!num09Check.test(request.task.urgency)) {
+            response.messages.push({field: 'urgency', message: 'must be a number between [0 - 9]'});
+        }
+        if (!num09Check.test(request.task.importance)) {
+            response.messages.push({field: 'importance', message: 'must be a number between [0 - 9]'});
+        }
+        var statusCheck = /^(new|in progress|block|finish)$/;
+        if (!statusCheck.test(request.task.status)) {
+            response.messages.push({field:'status',message:'must be new, in progress, block or finish'});
+        }
+        if ((request.task.tittle === '') || (request.task.tittle === undefined) || (request.task.tittle === null)) {
+            response.messages.push({field:'tittle',message:'is requiered'});
+        }
+        if (new Date(request.task.doDate) < new Date()) {
+            response.messages.push({field:'doDate',message:'must be equal or bigger to the today'});
+        }
+        if (response.messages.length !== 0) {
+            return socket.emit('add_task_response', response);
+        }
+        var db = null;
+        MongoClient.connect(urlMongo, function(error, result) {
+            if (error) {
+                response.messages.push({field:'all',message:error.message});
+                return socket.emit('add_task_response', response);
+            }
+            db = result;
+            var users = new Users;
+            users.connection = db;
+            users.findUser(request.email, function (error, message, result) {
+                if (error) {
+                    response.messages.push({field:'all',message:error.message});
+                    db.close();
+                    return socket.emit('add_task_response', response);
+                }
+                if (result === null) {
+                    response.messages.push({field:'all',message:'user not found'});
+                    db.close();
+                    return socket.emit('add_task_response', response);
+                }
+                let task = new Task;
+                task.tittle = request.task.tittle;
+                task.status = request.task.status;
+                task.doDate = request.task.doDate;
+                task.urgency = request.task.urgency;
+                task.importance = request.task.importance;
+                result.addTask(task);
+                result.sortTasks(function (error) {
+                    users.updateUser(result, function (error, message) {
+                        if (error) {
+                            response.messages.push({field: 'all', message: message});
+                        }
+                        response.user = result;
+                        db.close();
+                        return socket.emit('add_task_response', response);
                     });
                 });
             });
