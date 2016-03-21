@@ -36,36 +36,50 @@ var Task = require('./src/models/task.js');
 
 var serverPort = 8080;
 var urlMongo = 'mongodb://localhost/stackrank';
+var emailCheck = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+var wordCheck = /^\w+$/;
 
 app.use('/', function(req, res) {
      res.send('Stack Rank');
 });
+
+/**
+ * validateUser
+ *
+ * Validate user fields
+ *
+ * @param  {[type]} user [description]
+ *
+ * @return {Object}
+ */
+function validateUser(user) {
+    var response = {};
+    response.messages = [];
+    if (user === null) {
+        response.messages.push({field: 'all', message: 'user must be not empty'});
+        return response
+    }
+    if (!emailCheck.test(user.email)) {
+        response.messages.push({field: 'email', message: 'wrong format'});
+    }
+    if (!wordCheck.test(user.firstname)) {
+        response.messages.push({field: 'firstname', message: 'wrong format'});
+    }
+    if (!wordCheck.test(user.lastname)) {
+        response.messages.push({field: 'lastname', message: 'wrong format'});
+    }
+    if (!Array.isArray(user.tasks)) {
+        response.messages.push({field: 'tasks', message: 'must be array'});
+    }
+    return response;
+}
 
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 io.on('connection', function(socket){
     console.log((new Date()) + ' Connection accepted.');
     socket.on('create_user', function (request) {
-        var response = {};
-        response.messages = [];
-        if (request === null) {
-            response.messages.push({field: 'all', message: 'user must be not empty'});
-            return socket.emit('create_user_response', response);
-        }
-        var emailCheck = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        if (!emailCheck.test(request.email)) {
-            response.messages.push({field: 'email', message: 'wrong format'});
-        }
-        var wordCheck = /^\w+$/;
-        if (!wordCheck.test(request.firstname)) {
-            response.messages.push({field: 'firstname', message: 'wrong format'});
-        }
-        if (!wordCheck.test(request.lastname)) {
-            response.messages.push({field: 'lastname', message: 'wrong format'});
-        }
-        if (!Array.isArray(request.tasks)) {
-            response.messages.push({field: 'tasks', message: 'must be array'});
-        }
+        var response = validateUser(request);
         if (response.messages.length !== 0) {
             return socket.emit('create_user_response', response);
         }
@@ -118,7 +132,6 @@ io.on('connection', function(socket){
     });
     socket.on('find_user', function (request) {
         var response = {};
-        var emailCheck = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         if (!emailCheck.test(request)) {
             response.message = 'email wrong format';
             return socket.emit('find_user_response', response);
@@ -147,7 +160,6 @@ io.on('connection', function(socket){
     });
     socket.on('delete_user', function (request) {
         var response = {};
-        var emailCheck = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         if (!emailCheck.test(request)) {
             response.message = 'email wrong format';
             return socket.emit('delete_user_response', response);
@@ -184,6 +196,12 @@ io.on('connection', function(socket){
                 });
             });
         });
+    });
+    socket.on('update_user', function (request) {
+        var response = validateUser(request);
+        if (response.messages.length !== 0) {
+            return socket.emit('update_user_response', response);
+        }
     });
     socket.on('disconnect', function(data){
         console.log((new Date()) + ' Connection finish.');

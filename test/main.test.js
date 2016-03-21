@@ -412,4 +412,156 @@ describe('WebSocket', function() {
             });
         });
     });
+    context('Update User', function () {
+        var connection = null;
+        var db = null;
+        beforeEach(function(done) {
+            var url = 'mongodb://localhost/stackrank';
+            MongoClient.connect(url, function(err, result) {
+                assert.equal(null, err);
+                db = result;
+                let socketURL = 'ws://localhost:8080';
+                let options ={
+                    transports: ['websocket'],
+                    'force new connection': true
+                };
+                connection = io.connect(socketURL, options);
+                connection.on('connect', function() {
+                    done();
+                });
+            });
+        });
+        afterEach(function(done) {
+            if (connection !== null) {
+                let collection = db.collection('users');
+                collection.deleteMany({});
+                db.close();
+                connection.disconnect();
+            }
+            connection = null;
+            done();
+        });
+        it('Fail because user is empty.', function(done){
+            connection.emit('update_user', null);
+            connection.on('update_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'all', message: 'user must be not empty'}]);
+                done();
+            });
+        });
+        it('Fail because user have email empty.', function(done){
+            var user = {};
+            user.email = '';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            connection.emit('update_user', user);
+            connection.on('update_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'email',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have email wrong formated.', function(done){
+            var user = {};
+            user.email = 'john.doedomain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            connection.emit('update_user', user);
+            connection.on('update_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'email',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have firstname empty.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = '';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            connection.emit('update_user', user);
+            connection.on('update_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'firstname',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have firstname wrong formated.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John Doe';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            connection.emit('update_user', user);
+            connection.on('update_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'firstname',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have lastname empty.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = '';
+            user.tasks = [];
+            connection.emit('update_user', user);
+            connection.on('update_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'lastname',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have lastname wrong formated.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe, John';
+            user.tasks = [];
+            connection.emit('update_user', user);
+            connection.on('update_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'lastname',  message: 'wrong format'}]);
+                done();
+            });
+        });
+        it('Fail because user have tasks empty.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = null;
+            connection.emit('update_user', user);
+            connection.on('update_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'tasks', message: 'must be array'}]);
+                done();
+            });
+        });
+        it('Fail because user have tasks wrong formated.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = 'eeeee';
+            connection.emit('update_user', user);
+            connection.on('update_user_response', function (response) {
+                response.messages.should.deepEqual([{field: 'tasks', message: 'must be array'}]);
+                done();
+            });
+        });
+        it('Fail because user have wrong formated.', function(done){
+            var user = {};
+            user.email = 'john.doedomain.com';
+            user.firstname = 'John Doe';
+            user.lastname = 'Doe, John';
+            user.tasks = 'eeeee';
+            connection.emit('update_user', user);
+            connection.on('update_user_response', function (response) {
+                response.messages.should.deepEqual(
+                    [
+                        {field: 'email',  message: 'wrong format'},
+                        {field: 'firstname',  message: 'wrong format'},
+                        {field: 'lastname',  message: 'wrong format'},
+                        {field: 'tasks', message: 'must be array'}
+                    ]
+                );
+                done();
+            });
+        });
+    });
 });
