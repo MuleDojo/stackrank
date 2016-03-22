@@ -657,7 +657,7 @@ describe('WebSocket', function() {
                 done();
             });
         });
-        it('Faild beacuseemail is null.', function(done){
+        it('Faild beacuse email is null.', function(done){
             var user = {};
             user.email = null;
             connection.emit('add_task', user);
@@ -666,7 +666,7 @@ describe('WebSocket', function() {
                 done();
             });
         });
-        it('Faild beacuseemail is wrong format.', function(done){
+        it('Faild beacuse email is wrong format.', function(done){
             var user = {};
             user.email = 'johndowdomain.com';
             connection.emit('add_task', user);
@@ -965,6 +965,226 @@ describe('WebSocket', function() {
                     response.user.tasks[0].importance.should.be.eql(user.task.importance);
                     response.user.tasks[0].status.should.be.eql(user.task.status);
                     done();
+                });
+            });
+        });
+    });
+    context('Remove Task', function () {
+        var connection = null;
+        var db = null;
+        beforeEach(function(done) {
+            var url = 'mongodb://localhost/stackrank';
+            MongoClient.connect(url, function(err, result) {
+                assert.equal(null, err);
+                db = result;
+                let socketURL = 'ws://localhost:8080';
+                let options ={
+                    transports: ['websocket'],
+                    'force new connection': true
+                };
+                connection = io.connect(socketURL, options);
+                connection.on('connect', function() {
+                    done();
+                });
+            });
+        });
+        afterEach(function(done) {
+            if (connection !== null) {
+                let collection = db.collection('users');
+                collection.deleteMany({});
+                db.close();
+                connection.disconnect();
+            }
+            connection = null;
+            done();
+        });
+        it('Faild beacuse email is undefined.', function(done){
+            var user = {};
+            connection.emit('remove_task', user);
+            connection.on('remove_task_response', function (response) {
+                response.messages.should.be.eql([{field:'email',message:'email wrong format'}]);
+                done();
+            });
+        });
+        it('Faild beacuse email is empty.', function(done){
+            var user = {};
+            user.email = '';
+            connection.emit('remove_task', user);
+            connection.on('remove_task_response', function (response) {
+                response.messages.should.be.eql([{field:'email',message:'email wrong format'}]);
+                done();
+            });
+        });
+        it('Faild beacuse email is null.', function(done){
+            var user = {};
+            user.email = null;
+            connection.emit('remove_task', user);
+            connection.on('remove_task_response', function (response) {
+                response.messages.should.be.eql([{field:'email',message:'email wrong format'}]);
+                done();
+            });
+        });
+        it('Faild beacuse email is wrong format.', function(done){
+            var user = {};
+            user.email = 'johndowdomain.com';
+            connection.emit('remove_task', user);
+            connection.on('remove_task_response', function (response) {
+                response.messages.should.be.eql([{field:'email',message:'email wrong format'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task _id is null.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = null;
+            connection.emit('remove_task', user);
+            connection.on('remove_task_response', function (response) {
+                response.messages.should.be.eql([{field:'task._id',message:'is requiered'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task _id is empty.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = '';
+            connection.emit('remove_task', user);
+            connection.on('remove_task_response', function (response) {
+                response.messages.should.be.eql([{field:'task._id',message:'is requiered'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task _id is undefined.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            connection.emit('remove_task', user);
+            connection.on('remove_task_response', function (response) {
+                response.messages.should.be.eql([{field:'task._id',message:'is requiered'}]);
+                done();
+            });
+        });
+        it('Faild beacuse user not found.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 0;
+            connection.emit('remove_task', user);
+            connection.on('remove_task_response', function (response) {
+                response.messages.should.be.eql([{field:'all',message:'user not found'}]);
+                done();
+            });
+        });
+        it('Fail because task not exists.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            let collection = db.collection('users');
+            collection.insertOne(user, function(err, result) {
+                assert.equal(null, err);
+                var user = {};
+                user.email = 'john.doe@domain.com';
+                user.task = {};
+                user.task._id = 'ffffffffffff';
+                connection.emit('remove_task', user);
+                connection.on('remove_task_response', function (response) {
+                    response.messages.should.deepEqual(
+                        [
+                            {field: 'all',  message: 'task not found'}
+                        ]
+                    );
+                    done();
+                });
+            });
+        });
+        it('Fail because task not exists when with have another task.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            var task1 = {};
+            task1.tittle = 'first task';
+            task1.status = 'new';
+            task1.doDate = new Date().toString();
+            task1.dateAdmission = new Date().toString();
+            task1.urgency = 100;
+            task1.importance = 10;
+            var task2 = {};
+            task2.tittle = 'second task';
+            task2.status = 'new';
+            task2.doDate = new Date().toString();
+            task2.dateAdmission = new Date().toString();
+            task2.urgency = 100;
+            task2.importance = 0;
+            user.tasks.push(task1);
+            user.tasks.push(task2);
+            let collection = db.collection('users');
+            collection.insertOne(user, function(err, result) {
+                var user = {};
+                user.email = 'john.doe@domain.com';
+                user.task = {};
+                user.task._id = 'ffffffffffff';
+                connection.emit('remove_task', user);
+                connection.on('remove_task_response', function (response) {
+                    response.messages.should.deepEqual(
+                        [
+                            {field: 'all',  message: 'task not found'}
+                        ]
+                    );
+                    done();
+                });
+            });
+        });
+        it('Success.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            var task1 = {};
+            task1.tittle = 'first task';
+            task1.status = 'new';
+            task1.doDate = new Date().toString();
+            task1.dateAdmission = new Date().toString();
+            task1.urgency = 10;
+            task1.importance = 10;
+            var task2 = {};
+            task2.tittle = 'second task';
+            task2.status = 'new';
+            task2.doDate = new Date().toString();
+            task2.dateAdmission = new Date().toString();
+            task2.urgency = 10;
+            task2.importance = 0;
+            var task3 = {};
+            task3.tittle = 'third task';
+            task3.status = 'new';
+            task3.doDate = new Date().toString();
+            task3.dateAdmission = new Date().toString();
+            task3.urgency = 10;
+            task3.importance = 5;
+            user.tasks.push(task1);
+            user.tasks.push(task2);
+            user.tasks.push(task3);
+            let collection = db.collection('users');
+            collection.insertOne(user, function(err, result) {
+                connection.emit('find_user', 'john.doe@domain.com');
+                connection.on('find_user_response', function (response) {
+                    response.message.should.be.eql('success');
+                    var user = {};
+                    user.email = 'john.doe@domain.com';
+                    user.task = {};
+                    user.task._id = response.user.tasks[0]._id;
+                    task2._id = response.user.tasks[1]._id;
+                    task3._id = response.user.tasks[2]._id;
+                    connection.emit('remove_task', user);
+                    connection.on('remove_task_response', function (response) {
+                        response.messages.length.should.be.eql(0);
+                        response.user.tasks.should.containDeepOrdered([task3, task2]);
+                        done();
+                    });
                 });
             });
         });

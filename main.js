@@ -317,6 +317,69 @@ io.on('connection', function(socket){
             });
         });
     });
+    socket.on('remove_task', function (request) {
+        var response = {};
+        response.messages = [];
+        if (!emailCheck.test(request.email)) {
+            response.messages.push({field:'email',message:'email wrong format'});
+            return socket.emit('remove_task_response', response);
+        }
+        if ((request.task == undefined) || (request.task._id === '') || (request.task._id === undefined) || (request.task._id === null)) {
+            response.messages.push({field:'task._id',message:'is requiered'});
+            return socket.emit('remove_task_response', response);
+        }
+        var db = null;
+        MongoClient.connect(urlMongo, function(error, result) {
+            if (error) {
+                response.messages.push({field:'all',message:error.message});
+                return socket.emit('remove_task_response', response);
+            }
+            db = result;
+            var users = new Users;
+            users.connection = db;
+            users.findUser(request.email, function (error, message, result) {
+                if (error) {
+                    response.messages.push({field:'all',message:error.message});
+                    db.close();
+                    return socket.emit('remove_task_response', response);
+                }
+                if (result === null) {
+                    response.messages.push({field:'all',message:'user not found'});
+                    db.close();
+                    return socket.emit('remove_task_response', response);
+                }
+                if (result.tasks.length == 0) {
+                    response.messages.push({field:'all',message:'task not found'});
+                    db.close();
+                    return socket.emit('remove_task_response', response);
+                }
+                var i = -1;
+                for (let index in result.tasks) {
+                    if (result.tasks[index]._id == request.task._id) {
+                        i = index;
+                        break;
+                    }
+                }
+                if (i === -1) {
+                    response.messages.push({field:'all',message:'task not found'});
+                    db.close();
+                    return socket.emit('remove_task_response', response);
+                }
+                var user = result;
+                user.tasks.splice(i, 1);
+                user.sortTasks(function (error) {
+                    users.updateUser(user, function (error, message) {
+                        if (error) {
+                            response.messages.push({field: 'all', message: message});
+                        }
+                        response.user = user;
+                        db.close();
+                        return socket.emit('remove_task_response', response);
+                    });
+                });
+            });
+        });
+    });
     socket.on('disconnect', function(data){
         console.log((new Date()) + ' Connection finish.');
     });
