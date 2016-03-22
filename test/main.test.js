@@ -1189,4 +1189,456 @@ describe('WebSocket', function() {
             });
         });
     });
+    context('Update Task', function () {
+        var connection = null;
+        var db = null;
+        beforeEach(function(done) {
+            var url = 'mongodb://localhost/stackrank';
+            MongoClient.connect(url, function(err, result) {
+                assert.equal(null, err);
+                db = result;
+                let socketURL = 'ws://localhost:8080';
+                let options ={
+                    transports: ['websocket'],
+                    'force new connection': true
+                };
+                connection = io.connect(socketURL, options);
+                connection.on('connect', function() {
+                    done();
+                });
+            });
+        });
+        afterEach(function(done) {
+            if (connection !== null) {
+                let collection = db.collection('users');
+                collection.deleteMany({});
+                db.close();
+                connection.disconnect();
+            }
+            connection = null;
+            done();
+        });
+        it('Faild beacuse email is undefined.', function(done){
+            var user = {};
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'email',message:'email wrong format'}]);
+                done();
+            });
+        });
+        it('Faild beacuse email is empty.', function(done){
+            var user = {};
+            user.email = '';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'email',message:'email wrong format'}]);
+                done();
+            });
+        });
+        it('Faild beacuse email is null.', function(done){
+            var user = {};
+            user.email = null;
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'email',message:'email wrong format'}]);
+                done();
+            });
+        });
+        it('Faild beacuse email is wrong format.', function(done){
+            var user = {};
+            user.email = 'johndowdomain.com';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'email',message:'email wrong format'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task _id is null.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = null;
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'task._id',message:'is requiered'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task _id is empty.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = '';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'task._id',message:'is requiered'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task _id is undefined.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'task._id',message:'is requiered'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have urgency equal to null.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = null;
+            user.task.importance = 0;
+            user.task.status = 'new';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'urgency',message:'must be a number between [0 - 9]'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have urgency equal to undefined.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.importance = 0;
+            user.task.status = 'new';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'urgency',message:'must be a number between [0 - 9]'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have urgency equal to aaaa.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 'aaaa';
+            user.task.importance = 0;
+            user.task.status = 'new';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'urgency',message:'must be a number between [0 - 9]'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have urgency equal to 10.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 10;
+            user.task.importance = 0;
+            user.task.status = 'new';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'urgency',message:'must be a number between [0 - 9]'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have urgency equal to 100.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 100;
+            user.task.importance = 0;
+            user.task.status = 'new';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'urgency',message:'must be a number between [0 - 9]'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have importance equal to null.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = null;
+            user.task.status = 'new';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'importance',message:'must be a number between [0 - 9]'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have importance equal to undefined.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.status = 'finish';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'importance',message:'must be a number between [0 - 9]'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have importance equal to aaaa.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 'aaaa';
+            user.task.status = 'in progress';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'importance',message:'must be a number between [0 - 9]'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have importance equal to 10.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 100;
+            user.task.status = 'new';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'importance',message:'must be a number between [0 - 9]'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have importance equal to 100.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 100;
+            user.task.status = 'new';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'importance',message:'must be a number between [0 - 9]'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have status is equal undefined.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 9;
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'status',message:'must be new, in progress, block or finish'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have status is equal null.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 9;
+            user.task.status = null;
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'status',message:'must be new, in progress, block or finish'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have status is equal empty.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 9;
+            user.task.status = '';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'status',message:'must be new, in progress, block or finish'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have status not equal "new","in progress","block" or "finish".', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 9;
+            user.task.status = 'fruta';
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'status',message:'must be new, in progress, block or finish'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have tittle equal "".', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 9;
+            user.task.status = 'in progress';
+            user.task.tittle = '';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'tittle',message:'is requiered'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have tittle equal null.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 9;
+            user.task.status = 'in progress';
+            user.task.tittle = null;
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'tittle',message:'is requiered'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have tittle equal undefined.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 9;
+            user.task.status = 'in progress';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'tittle',message:'is requiered'}]);
+                done();
+            });
+        });
+        it('Faild beacuse task have doDate less today.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 'ffffffffffff';
+            user.task.urgency = 0;
+            user.task.importance = 9;
+            user.task.status = 'in progress';
+            user.task.doDate = new Date(1983, 6, 14, 9, 0, 0);
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'doDate',message:'must be equal or bigger to the today'}]);
+                done();
+            });
+        });
+        it('Faild beacuse user not found.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.task = {};
+            user.task._id = 0;
+            user.task.urgency = 0;
+            user.task.importance = 9;
+            user.task.status = 'in progress';
+            user.task.doDate = new Date(2017, 6, 14, 9, 0, 0);
+            user.task.tittle = 'some tittle';
+            connection.emit('update_task', user);
+            connection.on('update_task_response', function (response) {
+                response.messages.should.be.eql([{field:'all',message:'user not found'}]);
+                done();
+            });
+        });
+        it('Fail because task not exists.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            let collection = db.collection('users');
+            collection.insertOne(user, function(err, result) {
+                assert.equal(null, err);
+                var user = {};
+                user.email = 'john.doe@domain.com';
+                user.task = {};
+                user.task._id = 'ffffffffffff';
+                user.task.urgency = 0;
+                user.task.importance = 9;
+                user.task.status = 'in progress';
+                user.task.doDate = new Date(2017, 6, 14, 9, 0, 0);
+                user.task.tittle = 'some tittle';
+                connection.emit('update_task', user);
+                connection.on('update_task_response', function (response) {
+                    response.messages.should.deepEqual(
+                        [
+                            {field: 'all',  message: 'task not found'}
+                        ]
+                    );
+                    done();
+                });
+            });
+        });
+        it('Fail because task not exists when with have another task.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            var task1 = {};
+            task1.tittle = 'first task';
+            task1.status = 'new';
+            task1.doDate = new Date().toString();
+            task1.dateAdmission = new Date().toString();
+            task1.urgency = 100;
+            task1.importance = 10;
+            var task2 = {};
+            task2.tittle = 'second task';
+            task2.status = 'new';
+            task2.doDate = new Date().toString();
+            task2.dateAdmission = new Date().toString();
+            task2.urgency = 100;
+            task2.importance = 0;
+            user.tasks.push(task1);
+            user.tasks.push(task2);
+            let collection = db.collection('users');
+            collection.insertOne(user, function(err, result) {
+                var user = {};
+                user.email = 'john.doe@domain.com';
+                user.task = {};
+                user.task._id = 'ffffffffffff';
+                user.task.urgency = 0;
+                user.task.importance = 9;
+                user.task.status = 'in progress';
+                user.task.doDate = new Date(2017, 6, 14, 9, 0, 0);
+                user.task.tittle = 'some tittle';
+                connection.emit('update_task', user);
+                connection.on('update_task_response', function (response) {
+                    response.messages.should.deepEqual(
+                        [
+                            {field: 'all',  message: 'task not found'}
+                        ]
+                    );
+                    done();
+                });
+            });
+        });
+    });
 });

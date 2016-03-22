@@ -380,6 +380,76 @@ io.on('connection', function(socket){
             });
         });
     });
+    socket.on('update_task', function (request) {
+        var response = {};
+        response.messages = [];
+        if (!emailCheck.test(request.email)) {
+            response.messages.push({field:'email',message:'email wrong format'});
+            return socket.emit('update_task_response', response);
+        }
+        if ((request.task == undefined) || (request.task._id === '') || (request.task._id === undefined) || (request.task._id === null)) {
+            response.messages.push({field:'task._id',message:'is requiered'});
+            return socket.emit('update_task_response', response);
+        }
+        if (!num09Check.test(request.task.urgency)) {
+            response.messages.push({field: 'urgency', message: 'must be a number between [0 - 9]'});
+        }
+        if (!num09Check.test(request.task.importance)) {
+            response.messages.push({field: 'importance', message: 'must be a number between [0 - 9]'});
+        }
+        var statusCheck = /^(new|in progress|block|finish)$/;
+        if (!statusCheck.test(request.task.status)) {
+            response.messages.push({field:'status',message:'must be new, in progress, block or finish'});
+        }
+        if ((request.task.tittle === '') || (request.task.tittle === undefined) || (request.task.tittle === null)) {
+            response.messages.push({field:'tittle',message:'is requiered'});
+        }
+        if (new Date(request.task.doDate) < new Date()) {
+            response.messages.push({field:'doDate',message:'must be equal or bigger to the today'});
+        }
+        if (response.messages.length !== 0) {
+            return socket.emit('update_task_response', response);
+        }
+        var db = null;
+        MongoClient.connect(urlMongo, function(error, result) {
+            if (error) {
+                response.messages.push({field:'all',message:error.message});
+                return socket.emit('update_task_response', response);
+            }
+            db = result;
+            var users = new Users;
+            users.connection = db;
+            users.findUser(request.email, function (error, message, result) {
+                if (error) {
+                    response.messages.push({field:'all',message:error.message});
+                    db.close();
+                    return socket.emit('update_task_response', response);
+                }
+                if (result === null) {
+                    response.messages.push({field:'all',message:'user not found'});
+                    db.close();
+                    return socket.emit('update_task_response', response);
+                }
+                if (result.tasks.length == 0) {
+                    response.messages.push({field:'all',message:'task not found'});
+                    db.close();
+                    return socket.emit('update_task_response', response);
+                }
+                var i = -1;
+                for (let index in result.tasks) {
+                    if (result.tasks[index]._id == request.task._id) {
+                        i = index;
+                        break;
+                    }
+                }
+                if (i === -1) {
+                    response.messages.push({field:'all',message:'task not found'});
+                    db.close();
+                    return socket.emit('update_task_response', response);
+                }
+            });
+        });
+    });
     socket.on('disconnect', function(data){
         console.log((new Date()) + ' Connection finish.');
     });
