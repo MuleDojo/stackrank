@@ -1640,5 +1640,51 @@ describe('WebSocket', function() {
                 });
             });
         });
+        it('Success.', function(done){
+            var user = {};
+            user.email = 'john.doe@domain.com';
+            user.firstname = 'John';
+            user.lastname = 'Doe';
+            user.tasks = [];
+            var task1 = {};
+            task1.tittle = 'first task';
+            task1.status = 'new';
+            task1.doDate = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toString();
+            task1.dateAdmission = new Date().toString();
+            task1.urgency = 10;
+            task1.importance = 10;
+            var task2 = {};
+            task2.tittle = 'second task';
+            task2.status = 'new';
+            task2.doDate = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toString();
+            task2.dateAdmission = new Date().toString();
+            task2.urgency = 10;
+            task2.importance = 0;
+            user.tasks.push(task1);
+            user.tasks.push(task2);
+            let collection = db.collection('users');
+            collection.insertOne(user, function(err, result) {
+                connection.emit('find_user', 'john.doe@domain.com');
+                connection.on('find_user_response', function (response) {
+                    response.message.should.be.eql('success');
+                    var user = {};
+                    user.email = 'john.doe@domain.com';
+                    user.task = {};
+                    user.task._id = response.user.tasks[0]._id;
+                    user.task.tittle = response.user.tasks[0].tittle;
+                    user.task.status = response.user.tasks[0].status;
+                    user.task.doDate = response.user.tasks[0].doDate;
+                    user.task.dateAdmission = response.user.tasks[0].dateAdmission;
+                    user.task.urgency = 9;
+                    user.task.importance = 0;
+                    connection.emit('update_task', user);
+                    connection.on('update_task_response', function (response) {
+                        response.messages.length.should.be.eql(0);
+                        response.user.tasks.should.containDeepOrdered([task2, user.task]);
+                        done();
+                    });
+                });
+            });
+        });
     });
 });

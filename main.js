@@ -447,6 +447,18 @@ io.on('connection', function(socket){
                     db.close();
                     return socket.emit('update_task_response', response);
                 }
+                result.tasks[i] = request.task;
+                var user = result;
+                user.sortTasks(function (error) {
+                    users.updateUser(user, function (error, message) {
+                        if (error) {
+                            response.messages.push({field: 'all', message: message});
+                        }
+                        response.user = user;
+                        db.close();
+                        return socket.emit('update_task_response', response);
+                    });
+                });
             });
         });
     });
