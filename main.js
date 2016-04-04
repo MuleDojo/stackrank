@@ -27,21 +27,38 @@
 console.info("Stack Rank WebSocket Server");
 console.info("Copyright (C) 2016 Mule Dojo");
 
-var express = require('express');
-var app = express();
 var MongoClient = require('mongodb').MongoClient;
 var Users = require('./src/collections/users.js');
 var User = require('./src/models/user.js');
 var Task = require('./src/models/task.js');
+var express = require('express');
+var helmet = require('helmet');
+var fs = require('fs');
 
+var app = express();
 var serverPort = 8080;
 var urlMongo = 'mongodb://localhost/stackrank';
 var emailCheck = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 var wordCheck = /^\w+$/;
 var num09Check = /^[0-9]{1}$/;
 
+app.use(helmet());
+app.use(express.static(__dirname + '/public'));
+app.disable('x-powered-by');
 app.use('/', function(req, res) {
-     res.send('Stack Rank');
+    res.setHeader('Content-Type', 'text/html');
+    fs.readFile(
+       __dirname + '/src/views/index.html',
+       function (err, data) {
+           if (err) {
+               res.writeHead(500);
+               console.error(err);
+               return res.end('Error loading index.html');
+           }
+           res.writeHead(200);
+           res.end(data);
+       }
+    );
 });
 
 /**
