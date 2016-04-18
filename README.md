@@ -21,7 +21,7 @@ $> cd stackrank
 $> vagrant up
 ```
 
-The open your browser http://127.0.0.1:8080
+Then open your browser: http://127.0.0.1:8080
 
 ### Shutdown Project
 
